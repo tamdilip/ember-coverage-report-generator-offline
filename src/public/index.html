@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>🤖 Report Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+        integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+</head>
+
+<body ng-app="reportApp">
+    <div ng-controller="ReportController" class="container mt-5">
+        <h2 class="text-center">🤖 EMBER COVERAGE REPORT GENERATION 🤖</h2>
+        <div class="row mt-5 text-center">
+            <div class="col-12">
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr ng-repeat="x in repos">
+                            <td>
+                                <span>{{x.name}}</span>
+                            </td>
+                            <td>
+                                <span><input type="text" ng-model="x.branch"></span>
+                            </td>
+                            <td>
+                                <button type="button" class="btn"
+                                    ng-class="x.isReportGenerating?'btn-info pe-none':'btn-primary'"
+                                    ng-click="!x.isReportGenerating && generateReport(x)">
+                                    <span ng-show="!x.isReportGenerating">
+                                        <i class="fa fa-play-circle" aria-hidden="true"></i> Generate
+                                    </span>
+                                    <span ng-show="x.isReportGenerating">
+                                        <i class="fa fa-spinner fa-pulse"></i> {{x.phase}}
+                                    </span>
+                                </button>
+                                <button ng-show="x.message" type="button" class="btn btn-danger"
+                                    data-bs-toggle="tooltip" data-bs-placement="top" title="{{x.message}}">
+                                    <i class="fa fa-exclamation-triangle"></i>
+                                </button>
+                            </td>
+                            <td>
+                                <a role="button" class="btn btn-success" ng-class="!x.isReportGenerated?'disabled':''"
+                                    ng-href="./coverage/{{x.name}}/coverage/{{x.name}}-coverage-report.pdf" download>
+                                    <i class="fa fa-download" aria-hidden="true"></i> Report
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        let reportApp = angular.module("reportApp", []);
+        reportApp.controller('ReportController', function ($scope, $http) {
+            $scope.repos = [];
+
+            let ws = new WebSocket("ws://localhost:8080");
+            ws.onopen = () => console.log("Connected to report socket...");
+            ws.onmessage = (evt) => {
+                const { data } = evt;
+                $scope.repos = JSON.parse(data);
+                $scope.$apply();
+                console.log("Message is received...");
+            };
+            ws.onclose = () => console.log("Connection is closed...");
+
+            $scope.generateReport = repoInfo => ws.send(JSON.stringify(repoInfo));
+        });
+    </script>
+</body>
+
+</html>

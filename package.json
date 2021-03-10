@@ -1,0 +1,16 @@
+{
+  "name": "ember-coverage-report-generator",
+  "version": "1.0.0",
+  "description": "Minimal local node app to generate ember coverage reports from multiple repos with ease.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "puppeteer": "^5.5.0",
+    "ws": "^7.4.3"
+  },
+  "author": "Dilipan Somasundaram",
+  "license": "ISC"
+}
