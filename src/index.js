@@ -11,7 +11,7 @@ const wss = new WebSocket.Server({ port: PORTS.WS });
 const STATUS = { IN_PROGRESS: 'in-progress', COMPLETED: 'completed', ERROR: 'error' };
 const PHASE = { GENERATE: 'Generate', CLEAN: 'Tmp Cleaning', CLONE: 'Git Cloning', INSTALL: 'NPM Installing', TEST: 'Ember Testing', REPORT: 'Rendering Report' };
 
-let repos = GIT_REPOS.map(repo => {
+let repos = GIT_REPOS.map((repo, index) => {
     return {
         name: repo,
         branch: 'master',
@@ -48,7 +48,7 @@ function getUpdatedReposInfo(selectedRepo, status, phase, message = '') {
 async function renderPDF(repoName) {
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
-    await page.goto(`http://localhost:${PORTS.APP}/tmp/${repoName}/coverage`, { waitUntil: 'networkidle2' });
+    await page.goto(`http://localhost:${PORTS.APP}/coverage/${repoName}/coverage`, { waitUntil: 'networkidle2' });
     await page.pdf({ path: `tmp/${repoName}/coverage/${repoName}-coverage-report.pdf`, printBackground: true });
 
     await browser.close();
@@ -80,7 +80,7 @@ async function generateReport(ws, repo) {
         await execCommand(`cd tmp && cd ${name} && npm run localinstall`);
 
         ws.send(getUpdatedReposInfo(repo, STATUS.IN_PROGRESS, PHASE.TEST));
-        await execCommand(`cd tmp && cd ${name} && npm run coverage`);
+        await execCommand(`cd tmp && cd ${name} && COVERAGE=true ember t --test-port 0`);
 
         ws.send(getUpdatedReposInfo(repo, STATUS.IN_PROGRESS, PHASE.REPORT));
         await renderPDF(name);
@@ -104,6 +104,6 @@ wss.on('connection', function connection(ws) {
 });
 
 app.use('/', express.static('src/public'));
-app.use('/coverage', express.static('src/coverage'));
+app.use('/coverage', express.static('tmp'));
 
 app.listen(PORTS.APP, () => console.log(`http://localhost:${PORTS.APP}`));
