@@ -10,9 +10,12 @@ A handy and very simple node js - websocket app to generate ember test case cove
 ```
 Update Organisation owner and add repositories list in `config.js` and hit `http://localhost:3000`
 
+### Demo
+![Homepage](https://raw.githubusercontent.com/tamdilip/ember-coverage-report-generator-offline/main/doc/images/demo.png)
+
 ### Todo ⛏
  - Dynamic organisation handling for individual repo.
- - Dynamic repos list add and removal.
  - Enhanced dynamic cli commands attach support.
+ - windows cli support
 
 **Happy coding :) !!**
