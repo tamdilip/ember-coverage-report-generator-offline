@@ -1,8 +1,7 @@
-let GIT_OWNER = 'tamdilip';
-let GIT_REPOS = [
-    'ember-repo-one',
-    'ember-repo-two',
-    'ember-repo-three'
-];
+const config = {
+    GIT_OWNER: 'tamdilip',
+    APP_PORT: 3000,
+    WS_PORT: 3001
+};
 
-module.exports = { GIT_OWNER, GIT_REPOS };
+module.exports = config;

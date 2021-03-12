@@ -2,16 +2,19 @@ const { exec } = require('child_process');
 const puppeteer = require('puppeteer');
 const express = require('express');
 const WebSocket = require('ws');
-let { GIT_OWNER, GIT_REPOS } = require('./config');
+const fs = require('fs');
+let { GIT_OWNER, APP_PORT, WS_PORT } = require('./config');
+let { GIT_REPOS } = require('./repos');
 
 const app = express();
-const PORTS = { APP: 3000, WS: 8080 };
+const PORTS = { APP: APP_PORT, WS: WS_PORT };
 const wss = new WebSocket.Server({ port: PORTS.WS });
 
 const STATUS = { IN_PROGRESS: 'in-progress', COMPLETED: 'completed', ERROR: 'error' };
 const PHASE = { GENERATE: 'Generate', CLEAN: 'Tmp Cleaning', CLONE: 'Git Cloning', INSTALL: 'NPM Installing', TEST: 'Ember Testing', REPORT: 'Rendering Report' };
 
-let repos = GIT_REPOS.map((repo, index) => {
+
+let repos = GIT_REPOS.map((repo) => {
     return {
         name: repo,
         branch: 'master',
@@ -20,7 +23,7 @@ let repos = GIT_REPOS.map((repo, index) => {
         phase: PHASE.GENERATE,
         message: ''
     };
-});;
+});
 
 function getUpdatedReposInfo(selectedRepo, status, phase, message = '') {
     repos = repos.map(repo => {
@@ -92,12 +95,47 @@ async function generateReport(ws, repo) {
     }
 }
 
+function addRepo(ws, repo) {
+    let repoFileInfo = {
+        GIT_REPOS: []
+    };
+    repoFileInfo.GIT_REPOS = repos.map(r => r.name).filter(r => r != repo.name).concat(repo.name);
+    fs.writeFileSync('./src/repos.json', JSON.stringify(repoFileInfo));
+
+    repos = repos.concat([{
+        name: repo.name,
+        branch: 'master',
+        isReportGenerating: false,
+        isReportGenerated: false,
+        phase: PHASE.GENERATE,
+        message: ''
+    }]);
+    ws.send(JSON.stringify(repos));
+}
+
+function deleteRepo(ws, repo) {
+    let repoFileInfo = {
+        GIT_REPOS: []
+    };
+    repoFileInfo.GIT_REPOS = repos.map(r => r.name).filter(r => r != repo.name);
+    fs.writeFileSync('./src/repos.json', JSON.stringify(repoFileInfo));
+
+    repos = repos.filter(r => r.name != repo.name);
+    ws.send(JSON.stringify(repos));
+}
+
 wss.on('connection', function connection(ws) {
     console.log("App connected with socket...");
 
     ws.on('message', function incoming(message) {
         console.log('received: %s', message);
-        generateReport(ws, JSON.parse(message));
+        const { type, body } = JSON.parse(message);
+        if (type === 'START')
+            generateReport(ws, body);
+        else if (type === 'ADD')
+            addRepo(ws, body);
+        else if (type === 'DELETE')
+            deleteRepo(ws, body);
     });
 
     ws.send(JSON.stringify(repos));

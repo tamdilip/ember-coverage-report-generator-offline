@@ -15,14 +15,29 @@
         <h2 class="text-center">🤖 EMBER COVERAGE REPORT GENERATION 🤖</h2>
         <div class="row mt-5 text-center">
             <div class="col-12">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="Repo name" ng-model="newRepoName">
+                    <div class="input-group-append">
+                        <button class="btn btn-info" type="button" ng-click="addRepo(newRepoName)">
+                            <i class="fa fa-plus" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
                 <table class="table table-bordered">
                     <tbody>
                         <tr ng-repeat="x in repos">
                             <td>
+                                <button type="button" class="btn btn-danger" ng-click="deleteRepo(x.name)">
+                                    <i class="fa fa-minus" aria-hidden="true"></i>
+                                </button>
+                            </td>
+                            <td>
                                 <span>{{x.name}}</span>
                             </td>
                             <td>
-                                <span><input type="text" ng-model="x.branch"></span>
+                                <span><input type="text" class="form-control" ng-model="x.branch"></span>
                             </td>
                             <td>
                                 <button type="button" class="btn"
@@ -57,7 +72,7 @@
         reportApp.controller('ReportController', function ($scope, $http) {
             $scope.repos = [];
 
-            let ws = new WebSocket("ws://localhost:8080");
+            let ws = new WebSocket("ws://localhost:3001");
             ws.onopen = () => console.log("Connected to report socket...");
             ws.onmessage = (evt) => {
                 const { data } = evt;
@@ -67,7 +82,9 @@
             };
             ws.onclose = () => console.log("Connection is closed...");
 
-            $scope.generateReport = repoInfo => ws.send(JSON.stringify(repoInfo));
+            $scope.addRepo = name => ws.send(JSON.stringify({ type: 'ADD', body: { name } }));
+            $scope.deleteRepo = name => ws.send(JSON.stringify({ type: 'DELETE', body: { name } }));
+            $scope.generateReport = repoInfo => ws.send(JSON.stringify({ type: 'START', body: repoInfo }));
         });
     </script>
 </body>

@@ -1,0 +1,8 @@
+{
+    "GIT_REPOS": [
+        "ember-test-repo-one",
+        "ember-test-repo-two",
+        "ember-test-repo-three",
+        "ember-test-repo-four"
+    ]
+}
